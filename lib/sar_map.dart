@@ -19,19 +19,18 @@ class SarMap extends StatelessWidget {
     required this.vesselLongitude,
     required this.piwLatitude,
     required this.piwLongitude,
-    // required this.piwBearing,
-    // required this.piwRange
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    print('building map');
     final screenWidth = MediaQuery.of(context).size.width;
     // return Placeholder();
     return StaticMap(
         googleApiKey: googleApiKey,
         width: screenWidth > 800 ? 600 : screenWidth,
         height: screenWidth > 800 ? 600 : screenWidth,
-        scaleToDevicePixelRatio: true,
+        // scaleToDevicePixelRatio: true,
         visible: [
           GeocodedLocation.latLng(latitude, longitude),
           GeocodedLocation.latLng(vesselLatitude, vesselLongitude),

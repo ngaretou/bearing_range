@@ -1,5 +1,5 @@
 name: bearing_range
-description: A new Flutter project.
+description: CGA SAR calculator.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -38,6 +38,7 @@ dependencies:
   vector_math: ^2.1.4
   google_static_maps_controller: ^1.0.0
   share_plus: ^6.3.1
+  url_launcher: ^6.1.10
 
 dev_dependencies:
   flutter_test:

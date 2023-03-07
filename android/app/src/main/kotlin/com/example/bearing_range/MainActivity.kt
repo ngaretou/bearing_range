@@ -1,4 +1,4 @@
-package com.example.bearing_range
+package com.ngaretou.bearingrange
 
 import io.flutter.embedding.android.FlutterActivity
 

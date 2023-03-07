@@ -45,6 +45,9 @@ class ResultsPage extends StatelessWidget {
       required this.piwRange})
       : super(key: key);
 
+  /*Set up the results - doing it this way saves a bit of typing 
+    and allows for flexibility but I admit it does make it harder to read. 
+    This is a widget that gives the results in a readable format. */
   Widget result(List<String> labels, List<String> data, BuildContext context) {
     List<Widget> listOfRows = [];
 
@@ -71,7 +74,6 @@ class ResultsPage extends StatelessWidget {
       listOfRows.add(const Divider(
         height: 16,
         thickness: 2,
-        // color: Colors.red,
       ));
     }
 
@@ -79,48 +81,9 @@ class ResultsPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start, children: listOfRows);
   }
 
-  //  Widget result(List<String> labels, List<String> data, BuildContext context) {
-  //   final labelWidgets = List.generate(labels.length, (index) {
-  //     return SelectableText(
-  //       labels[index],
-  //       style: Theme.of(context).textTheme.titleMedium,
-  //     );
-  //   });
-
-  //   final dataWidgets = List.generate(data.length, (index) {
-  //     return SelectableText(
-  //       data[index],
-  //       style: Theme.of(context)
-  //           .textTheme
-  //           .titleMedium!
-  //           .copyWith(overflow: TextOverflow.ellipsis),
-  //     );
-  //   });
-
-  //   return Row(
-  //     children: [
-  //       Expanded(
-  //         flex: 1,
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           crossAxisAlignment: CrossAxisAlignment.start,
-  //           children: labelWidgets,
-  //         ),
-  //       ),
-  //       const SizedBox(width: 20),
-  //       Expanded(
-  //         flex: 1,
-  //         child: Column(
-  //           crossAxisAlignment: CrossAxisAlignment.start,
-  //           children: dataWidgets,
-  //         ),
-  //       )
-  //     ],
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
+    //A quick section heading style
     Widget sectionHeading(String text) {
       return SelectableText(
         text,
@@ -132,15 +95,21 @@ class ResultsPage extends StatelessWidget {
 
     return Scaffold(
         appBar: AppBar(title: const Text('SAR Data')),
+
+        //Give user a quick way to share the results. If you want to add to what is shared,
+        //Just add into the Share.share text
         floatingActionButton: FloatingActionButton(
             onPressed: () {
               Share.share(
-                "Coordinates to share",
+                "Vessel to PIW bearing\n    $vesselPiwBearing\nVessel to PIW range\n    $vesselPiwRange",
                 sharePositionOrigin: Rect.fromLTWH(
                     0, 0, screensize.width, screensize.height / 2),
               );
             },
             child: const Icon(Icons.share)),
+
+        //This padding gives some responsiveness. If it's narrow it takes whole width,
+        //if not it gives some padding
         body: Padding(
           padding: screensize.width > 800
               ? EdgeInsets.symmetric(
@@ -161,6 +130,8 @@ class ResultsPage extends StatelessWidget {
                 vesselPiwRange.toString(),
               ], context),
               const SizedBox(height: 16),
+
+              //Here's the map
               Center(
                 child: SarMap(
                   latitude: latitude,

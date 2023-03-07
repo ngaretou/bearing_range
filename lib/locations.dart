@@ -10,6 +10,7 @@ class Location {
   });
 }
 
+//Just add more locations here! If you had a list of all CGA bases you could code an import here.
 List<Location> locations = [
   Location(
     location: "Enter coordinates",

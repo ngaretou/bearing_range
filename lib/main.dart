@@ -6,7 +6,13 @@ import 'package:vector_math/vector_math.dart';
 import 'locations.dart';
 import 'functions.dart';
 import 'results.dart';
+import 'drawer.dart';
 
+//This app takes an origin point and a bearing and range to a vessel
+//and a person in water and calculates
+//bearing and range from vessel to PIW with map
+
+//This is boilerplate/standard code to get a Flutter app going
 void main() {
   runApp(const MyApp());
 }
@@ -19,25 +25,36 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  //This globalkey is unfortunately a bit of an unusual case.
+  //We want to have a parent widget, MyApp, run a method of a child widget,
+  // LocationCalculator. Skip this for now if you're just getting started.
   final globalKey = GlobalKey<_LocationCalculatorState>();
   @override
   Widget build(BuildContext context) {
+    //Standard Flutter code to get us going
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
+      theme: ThemeData.dark(), //Try replacing dark with light
+      //Scaffold gives you a background, app bar, and some other housekeeping things
       home: Scaffold(
+        //InfoDrawer is a widget in another file. In an IDE like Microsoft Code, Ctrl/Cmd click to follow the link.
+        //Notice this file is imported above : import 'drawer.dart';
+        drawer: const InfoDrawer(),
         appBar: AppBar(
           title: const Text('CGA SAR Calculator'),
         ),
+        //The 'equals' button lower right.
         floatingActionButton: FloatingActionButton(
             onPressed: () => globalKey.currentState?.calculateSarData(),
-            child: const Icon(Icons.calculate)),
+            child: const Icon(Icons.arrow_forward)),
         body: LocationCalculator(key: globalKey),
       ),
     );
   }
 }
 
+//Here is the main part of the screen you see when you run the app.
+//First some code to get the widget going:
 class LocationCalculator extends StatefulWidget {
   const LocationCalculator({Key? key}) : super(key: key);
 
@@ -46,6 +63,9 @@ class LocationCalculator extends StatefulWidget {
 }
 
 class _LocationCalculatorState extends State<LocationCalculator> {
+  //Now here we set up some variables. These controllers are ways of controlling
+  //and reading the text boxes below. To refer to the box, you use e.g. latitudeController;
+  //to refer to teh contents of the box, e.g. latitudeController.text
   final formKey = GlobalKey<FormState>();
   TextEditingController latitudeController = TextEditingController();
   TextEditingController longitudeController = TextEditingController();
@@ -67,37 +87,11 @@ class _LocationCalculatorState extends State<LocationCalculator> {
   // Variable to store the current origin position
   Position? currentPosition;
 
-  // Keeping track of the selected origin in the dropdown
+  // Keeping track of the selected origin in the dropdown boxx
   late int selectedOrigin;
 
-  // Method to get the current position using geolocator package
-  void getCurrentPosition() async {
-    //This displays an overlay with a spinning progress indicator until device returns location
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return FutureBuilder(
-              future: determinePosition(),
-              builder: (ctx, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else {
-                  currentPosition = snapshot.data;
-                  Navigator.of(context).pop();
-                  return Container(); //this never gets called but avoids an IDE error
-                }
-              });
-        });
-
-    latitudeController.text = currentPosition!.latitude
-        .toString(); // Set latitude input value as current latitude
-    longitudeController.text = currentPosition!.longitude
-        .toString(); // Set longitude input value as current longitude
-
-    setState(() {});
-  }
-
-  // Method to calculate the new latitude and longitude using vector math package
+  // Method to calculate the new latitude and longitude using vector math package.
+  //Below we'll send this function a range and bearing and it will send us the new lat and lon.
   List<double> calculateNewCoordinates(double range, double bearing) {
     // Convert degrees to radians for calculations
 
@@ -128,6 +122,9 @@ class _LocationCalculatorState extends State<LocationCalculator> {
     return [returnLatitude, returnLongitude];
   }
 
+  //This function uses a package to give us the bearin and range from vessel to PIW.
+  //To use raw math, comment the first two lines out and do your own calculations.
+  //Make sure it returns  distanceInKM and calculatedRotation as the range and bearing.
   List<double> rangeBearingAToB(
       double latA, double lonA, double latB, double lonB) {
     double distanceInKM =
@@ -138,50 +135,11 @@ class _LocationCalculatorState extends State<LocationCalculator> {
     return [distanceInKM, calculatedRotation];
   }
 
-  //First try at range/bearing A to B
-  // This function assumes that bearingA, rangeA, bearingB, rangeB are given in degrees and kilometers
-  // It returns a list with two elements: [bearingAB, rangeAB]
-  // List<double> rangeBearingAToB(
-  //     double rangeA, double bearingA, double rangeB, double bearingB) {
-  //   // Convert degrees to radians
-  //   double rad(double deg) => deg * pi / 180;
-
-  //   // Convert radians to degrees
-  //   double deg(double rad) => rad * 180 / pi;
-
-  //   // Calculate latitude and longitude of A using spherical coordinates
-  //   double latA = asin(sin(rad(90)) * cos(rad(rangeA) / 6371));
-  //   double lonA = rad(bearingA);
-
-  //   // Calculate latitude and longitude of B using spherical coordinates
-  //   double latB = asin(sin(rad(90)) * cos(rad(rangeB) / 6371));
-  //   double lonB = rad(bearingB);
-
-  //   // Calculate X and Y for finding bearing from A to B
-  //   double X = cos(latB) * sin(lonB - lonA);
-  //   double Y = cos(latA) * sin(latB) - sin(latA) * cos(latB) * cos(lonB - lonA);
-
-  //   // Calculate bearing from A to B using atan2 function
-  //   double bearingAB = deg(atan2(X, Y));
-
-  //   // Adjust bearing to be between 0 and 360 degrees
-  //   if (bearingAB < 0) {
-  //     bearingAB += 360;
-  //   }
-
-  //   // Calculate distance from A to B using haversine formula
-  //   double hav(double x) => sin(x / 2) * sin(x / 2);
-  //   double distanceAB = (6371 *
-  //           2 *
-  //           asin(sqrt(
-  //               hav(latB - latA) + cos(latA) * cos(latB) * hav(lonB - lonA)))) *
-  //       100;
-
-  //   // Return a list with two elements: [bearingAB,distanceAB]
-  //   return [distanceAB, bearingAB];
-  // }
-
-  // Method to build a text field widget for input values
+  /* Method to build a text field widget for input values
+  One way of making things faster is to build a template widget that you can use later. 
+  Otherwise if you change - for example the font size - you have to make that change for 
+  all the widgets. This way it's like a style in Word - make the change once and it is 
+  in effect anywhere you use this widget. For this one, give it a label, a hint, and a controller.*/
   TextFormField buildTextField(
     String label,
     String hint,
@@ -195,6 +153,7 @@ class _LocationCalculatorState extends State<LocationCalculator> {
         }
         return null;
       },
+      style: Theme.of(context).textTheme.headlineSmall,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -204,6 +163,7 @@ class _LocationCalculatorState extends State<LocationCalculator> {
     );
   }
 
+  //Not a long widget but it helps for styles
   Widget sectionHeading(String text) {
     return Text(
       text,
@@ -211,12 +171,16 @@ class _LocationCalculatorState extends State<LocationCalculator> {
     );
   }
 
+  //This kicks off the dropdown as the first option
   @override
   void initState() {
     selectedOrigin = 0;
     super.initState();
   }
 
+  /* This one gives you the info you want and then displays it. This is run 
+  from the big calculate button
+  */
   void calculateSarData() {
     if (formKey.currentState!.validate()) {
       //Get the info
@@ -229,12 +193,8 @@ class _LocationCalculatorState extends State<LocationCalculator> {
         double.parse(piwBearingController.text),
       );
       final vesselSarData = rangeBearingAToB(
-          vesselLocation[0], vesselLocation[1], piwLocation[0], piwLocation[1]
-          // double.parse(vesselRangeController.text),
-          // double.parse(vesselBearingController.text),
-          // double.parse(piwRangeController.text),
-          // double.parse(piwBearingController.text),
-          );
+          vesselLocation[0], vesselLocation[1], piwLocation[0], piwLocation[1]);
+
       //Now push it to results page
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -258,6 +218,36 @@ class _LocationCalculatorState extends State<LocationCalculator> {
 
   @override
   Widget build(BuildContext context) {
+    // Method to get the current position using geolocator package
+    void getCurrentPosition() async {
+      //This displays an overlay with a spinning progress indicator until device returns location
+      showDialog(
+          context: context,
+          builder: (context) {
+            return FutureBuilder(
+                //This function is in a separate file for convenience sake
+                future: determinePosition(),
+                builder: (ctx, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else {
+                    Navigator.of(context).pop();
+                    currentPosition = snapshot.data;
+
+                    return Container(); //this never gets called but avoids an IDE error
+                  }
+                });
+          }).then((_) {
+        latitudeController.text = currentPosition!.latitude
+            .toString(); // Set latitude input value as current latitude
+        longitudeController.text = currentPosition!.longitude
+            .toString(); // Set longitude input value as current longitude
+      });
+    }
+
+    /*This is pretty cool - just add more locations to the locations.dart and they'll show up in the box!
+    List.generate takes a list of things and makes a list of other things. Here we're taking coordinates and
+    making a bunch of widgets. */
     List<DropdownMenuItem<int>> locationList =
         List.generate(locations.length, ((index) {
       return DropdownMenuItem<int>(
@@ -269,6 +259,8 @@ class _LocationCalculatorState extends State<LocationCalculator> {
 
     final screenwidth = MediaQuery.of(context).size.width;
 
+    /*Now here is where things start happening. 
+    The return statement is where the action starts.*/
     return Center(
       child: Padding(
         padding: screenwidth > 800
@@ -276,20 +268,35 @@ class _LocationCalculatorState extends State<LocationCalculator> {
                 vertical: 16, horizontal: (screenwidth - 600) / 2)
             : const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
+          //Wrapping the text boxes in a form allows us more control
           child: Form(
             key: formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                //The CGA logo
                 Center(
-                  child: Container(
-                    width: 150,
-                    height: 150,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        fit: BoxFit.fitHeight,
-                        image: AssetImage("assets/uscga_mono.png"),
+                  //Put in default data for testing rather than typing!
+                  child: GestureDetector(
+                    onDoubleTap: () {
+                      latitude = 41.371601;
+                      longitude = -72.095820;
+                      latitudeController.text = '41.371601';
+                      longitudeController.text = '-72.095820';
+                      vesselBearingController.text = '90';
+                      vesselRangeController.text = '.5';
+                      piwBearingController.text = '60';
+                      piwRangeController.text = '.6';
+                    },
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          fit: BoxFit.fitHeight,
+                          image: AssetImage("assets/uscga_mono.png"),
+                        ),
                       ),
                     ),
                   ),
@@ -373,19 +380,6 @@ class _LocationCalculatorState extends State<LocationCalculator> {
                 buildTextField('Bearing', 'Enter bearing in degrees',
                     piwBearingController),
                 const SizedBox(height: 16),
-                // Center(
-                //   child: ElevatedButton(
-                //     onPressed: () {
-                //       calculateSarData();
-                //     },
-                //     child: const Text('Calculate'),
-                //   ),
-                // ),
-                // const SizedBox(height: 16),
-                // if (newLatitude != null)
-                //   Text('New Latitude: ${newLatitude ?? ''}'),
-                // if (newLongitude != null)
-                //   Text('New Longitude: ${newLongitude ?? ''}'),
               ],
             ),
           ),
