@@ -17,7 +17,7 @@ class InfoDrawer extends StatelessWidget {
                 children: [
                   const Icon(Icons.support),
                   const SizedBox(width: 25),
-                  Text("CGA SAR calculator",
+                  Text("SAR calculator",
                       style: Theme.of(context).textTheme.titleMedium)
                 ],
               ),

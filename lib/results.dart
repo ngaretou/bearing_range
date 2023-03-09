@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 class ResultsPage extends StatelessWidget {
   //Givens
+  final String units;
   //origin location
   final double latitude;
   final double longitude;
@@ -31,6 +32,7 @@ class ResultsPage extends StatelessWidget {
 
   const ResultsPage(
       {Key? key,
+      required this.units,
       required this.latitude,
       required this.longitude,
       required this.vesselBearing,
@@ -83,6 +85,17 @@ class ResultsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //Ranges come in kms. Need to be displayed in NM if that's the unit.
+    double vesselPiwRangeInUnits = vesselPiwRange;
+    double vesselRangeInUnits = vesselRange;
+    double piwRangeInUnits = piwRange;
+
+    if (units == 'NM') {
+      vesselPiwRangeInUnits = vesselPiwRangeInUnits * .539957;
+      vesselRangeInUnits = vesselRangeInUnits * .539957;
+      piwRangeInUnits = piwRangeInUnits * .539957;
+    }
+
     //A quick section heading style
     Widget sectionHeading(String text) {
       return SelectableText(
@@ -101,7 +114,7 @@ class ResultsPage extends StatelessWidget {
         floatingActionButton: FloatingActionButton(
             onPressed: () {
               Share.share(
-                "Vessel to PIW bearing\n    $vesselPiwBearing\nVessel to PIW range\n    $vesselPiwRange",
+                "Vessel to PIW bearing\n    $vesselPiwBearing°\nVessel to PIW range\n    $vesselPiwRangeInUnits $units",
                 sharePositionOrigin: Rect.fromLTWH(
                     0, 0, screensize.width, screensize.height / 2),
               );
@@ -110,79 +123,80 @@ class ResultsPage extends StatelessWidget {
 
         //This padding gives some responsiveness. If it's narrow it takes whole width,
         //if not it gives some padding
-        body: Padding(
-          padding: screensize.width > 800
-              ? EdgeInsets.symmetric(
-                  vertical: 16, horizontal: (screensize.width - 600) / 2)
-              : const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-              child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              sectionHeading('SAR DATA'),
-              const SizedBox(height: 16),
-              result([
-                'Vessel to PIW bearing',
-                'Vessel to PIW range',
-              ], [
-                vesselPiwBearing.toString(),
-                vesselPiwRange.toString(),
-              ], context),
-              const SizedBox(height: 16),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: screensize.width > 800
+                ? EdgeInsets.symmetric(
+                    vertical: 16, horizontal: (screensize.width - 600) / 2)
+                : const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                sectionHeading('SAR DATA'),
+                const SizedBox(height: 16),
+                result([
+                  'Vessel to PIW bearing',
+                  'Vessel to PIW range',
+                ], [
+                  '${vesselPiwBearing.toString()}°',
+                  '${vesselPiwRangeInUnits.toString()} $units',
+                ], context),
+                const SizedBox(height: 16),
 
-              //Here's the map
-              Center(
-                child: SarMap(
-                  latitude: latitude,
-                  longitude: longitude,
-                  vesselLatitude: vesselLatitude,
-                  vesselLongitude: vesselLongitude,
-                  piwLatitude: piwLatitude,
-                  piwLongitude: piwLongitude,
+                //Here's the map - units don't matter here
+                Center(
+                  child: SarMap(
+                    latitude: latitude,
+                    longitude: longitude,
+                    vesselLatitude: vesselLatitude,
+                    vesselLongitude: vesselLongitude,
+                    piwLatitude: piwLatitude,
+                    piwLongitude: piwLongitude,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              sectionHeading('Vessel'),
-              const SizedBox(height: 16),
-              result([
-                'Latitude',
-                'Longitude',
-              ], [
-                vesselLatitude.toString(),
-                vesselLongitude.toString(),
-              ], context),
-              const SizedBox(height: 16),
-              sectionHeading('PIW'),
-              const SizedBox(height: 16),
-              result([
-                'Latitude',
-                'Longitude',
-              ], [
-                piwLatitude.toString(),
-                piwLongitude.toString(),
-              ], context),
-              const SizedBox(height: 16),
-              sectionHeading('Origin'),
-              const SizedBox(height: 16),
-              result([
-                'Latitude',
-                'Longitude',
-                'Origin to Vessel Bearing',
-                'Origin to Vessel Range',
-                'Origin to PIW Bearing',
-                'Origin to PIW Range'
-              ], [
-                latitude.toString(),
-                longitude.toString(),
-                vesselBearing.toString(),
-                vesselRange.toString(),
-                piwBearing.toString(),
-                piwRange.toString(),
-              ], context),
-              const SizedBox(height: 16),
-            ],
-          )),
+                const SizedBox(height: 16),
+                sectionHeading('Vessel'),
+                const SizedBox(height: 16),
+                result([
+                  'Latitude',
+                  'Longitude',
+                ], [
+                  vesselLatitude.toString(),
+                  vesselLongitude.toString(),
+                ], context),
+                const SizedBox(height: 16),
+                sectionHeading('PIW'),
+                const SizedBox(height: 16),
+                result([
+                  'Latitude',
+                  'Longitude',
+                ], [
+                  piwLatitude.toString(),
+                  piwLongitude.toString(),
+                ], context),
+                const SizedBox(height: 16),
+                sectionHeading('Origin'),
+                const SizedBox(height: 16),
+                result([
+                  'Latitude',
+                  'Longitude',
+                  'Origin to Vessel Bearing',
+                  'Origin to Vessel Range',
+                  'Origin to PIW Bearing',
+                  'Origin to PIW Range'
+                ], [
+                  latitude.toString(),
+                  longitude.toString(),
+                  '${vesselBearing.toString()}°',
+                  '${vesselRangeInUnits.toString()} $units',
+                  '${piwBearing.toString()}°',
+                  '${piwRangeInUnits.toString()} $units',
+                ], context),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
         ));
   }
 }

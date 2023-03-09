@@ -41,7 +41,7 @@ class _MyAppState extends State<MyApp> {
         //Notice this file is imported above : import 'drawer.dart';
         drawer: const InfoDrawer(),
         appBar: AppBar(
-          title: const Text('CGA SAR Calculator'),
+          title: const Text('SAR Calculator'),
         ),
         //The 'equals' button lower right.
         floatingActionButton: FloatingActionButton(
@@ -73,6 +73,9 @@ class _LocationCalculatorState extends State<LocationCalculator> {
   TextEditingController vesselRangeController = TextEditingController();
   TextEditingController piwBearingController = TextEditingController();
   TextEditingController piwRangeController = TextEditingController();
+
+  //Which units
+  String units = 'NM';
 
   // Variables to store the input values
   double? latitude;
@@ -183,13 +186,22 @@ class _LocationCalculatorState extends State<LocationCalculator> {
   */
   void calculateSarData() {
     if (formKey.currentState!.validate()) {
+      //Take into account units
+      double vesselRange = double.parse(vesselRangeController.text);
+      double piwRange = double.parse(piwRangeController.text);
+      //do the conversion
+      if (units == 'NM') {
+        vesselRange = vesselRange * .539957;
+        piwRange = piwRange * .539957;
+      }
+
       //Get the info
       final vesselLocation = calculateNewCoordinates(
-        double.parse(vesselRangeController.text),
+        vesselRange,
         double.parse(vesselBearingController.text),
       );
       final piwLocation = calculateNewCoordinates(
-        double.parse(piwRangeController.text),
+        piwRange,
         double.parse(piwBearingController.text),
       );
       final vesselSarData = rangeBearingAToB(
@@ -199,6 +211,7 @@ class _LocationCalculatorState extends State<LocationCalculator> {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => ResultsPage(
+              units: units,
               latitude: latitude!,
               longitude: longitude!,
               vesselBearing: double.parse(vesselBearingController.text),
@@ -253,54 +266,123 @@ class _LocationCalculatorState extends State<LocationCalculator> {
       return DropdownMenuItem<int>(
         value: index,
         // onTap: () {},
-        child: Text(locations[index].location),
+        child: Text(
+          locations[index].location,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
       );
     }));
+
+    List<DropdownMenuItem<String>> unitsList = [
+      DropdownMenuItem<String>(
+        value: 'NM',
+        child: Text(
+          'NM',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      ),
+      DropdownMenuItem<String>(
+        value: 'km',
+        child: Text(
+          'km',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      ),
+    ];
 
     final screenwidth = MediaQuery.of(context).size.width;
 
     /*Now here is where things start happening. 
     The return statement is where the action starts.*/
     return Center(
-      child: Padding(
-        padding: screenwidth > 800
-            ? EdgeInsets.symmetric(
-                vertical: 16, horizontal: (screenwidth - 600) / 2)
-            : const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          //Wrapping the text boxes in a form allows us more control
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: screenwidth > 800
+              ? EdgeInsets.symmetric(
+                  vertical: 16, horizontal: (screenwidth - 600) / 2)
+              : const EdgeInsets.all(16.0),
           child: Form(
             key: formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //The CGA logo
-                Center(
-                  //Put in default data for testing rather than typing!
-                  child: GestureDetector(
-                    onDoubleTap: () {
-                      latitude = 41.371601;
-                      longitude = -72.095820;
-                      latitudeController.text = '41.371601';
-                      longitudeController.text = '-72.095820';
-                      vesselBearingController.text = '90';
-                      vesselRangeController.text = '.5';
-                      piwBearingController.text = '60';
-                      piwRangeController.text = '.6';
-                    },
-                    child: Container(
-                      width: 150,
-                      height: 150,
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          fit: BoxFit.fitHeight,
-                          image: AssetImage("assets/uscga_mono.png"),
+                //The app logo
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const SizedBox(width: 100),
+                    const Expanded(
+                        flex: 1,
+                        child: SizedBox(
+                          width: 10,
+                        )),
+                    Center(
+                      //Put in default data for testing rather than typing!
+                      child: GestureDetector(
+                        onDoubleTap: () {
+                          latitude = 41.371601;
+                          longitude = -72.095820;
+                          latitudeController.text = '41.371601';
+                          longitudeController.text = '-72.095820';
+                          vesselBearingController.text = '90';
+                          vesselRangeController.text = '.5';
+                          piwBearingController.text = '60';
+                          piwRangeController.text = '.6';
+                        },
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: const BoxDecoration(
+                            color: Color.fromRGBO(240, 237, 237, 1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.support,
+                            size: 100,
+                            color: Color.fromARGB(200, 217, 2, 2),
+                          ),
+                        ),
+                        // child: Container(
+                        //   width: 150,
+                        //   height: 150,
+                        //   decoration: const BoxDecoration(
+                        //     image: DecorationImage(
+                        //       fit: BoxFit.fitHeight,
+                        //       image: AssetImage("assets/uscga_mono.png"),
+                        //     ),
+                        //   ),
+                        // ),
+                      ),
+                    ),
+                    const Expanded(
+                        flex: 1,
+                        child: SizedBox(
+                          width: 10,
+                        )),
+                    // ignore: sized_box_for_whitespace
+                    Container(
+                      width: 100,
+                      // height: 60,
+                      child: DropdownButtonFormField(
+                        value: units,
+                        items: unitsList,
+                        onChanged: (i) {
+                          setState(() {
+                            units = i!;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          filled: false,
+                          border: OutlineInputBorder(),
+                          labelText: 'Units',
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
+
                 sectionHeading('Origin'),
                 const SizedBox(
                   height: 16,
@@ -356,7 +438,7 @@ class _LocationCalculatorState extends State<LocationCalculator> {
                 ),
                 buildTextField(
                   'Range',
-                  'Enter range in km',
+                  'Enter range in $units',
                   vesselRangeController,
                 ),
                 const SizedBox(height: 16),
@@ -375,7 +457,7 @@ class _LocationCalculatorState extends State<LocationCalculator> {
                   height: 16,
                 ),
                 buildTextField(
-                    'Range', 'Enter range in km', piwRangeController),
+                    'Range', 'Enter range in $units', piwRangeController),
                 const SizedBox(height: 16),
                 buildTextField('Bearing', 'Enter bearing in degrees',
                     piwBearingController),
